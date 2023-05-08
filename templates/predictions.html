@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Predictions{% endblock %}
+
+{% block content %}
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <p>{{msg}}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+<p>Enter your predictions here, {{user}}:</p>
+<form method="POST" action="">
+    {{ form.hidden_tag() }}
+    {% for i in range(0, my_list|length, 2) %}
+<!--      <div class="match-prediction">-->
+<!--        <div class="home-team">-->
+<!--          {{ my_list[i] }}-->
+<!--        </div>-->
+<!--        <div class="away-team">-->
+<!--          {{ my_list[i+1] }}-->
+        </div>
+        <div class="score-prediction">
+
+          <label for="{{ my_list[i] }}_score">{{ my_list[i] }}:</label>
+          <input type="text" id="{{ my_list[i] }}_score" name="{{ my_list[i] }}_score">
+            <label             </label>
+          <label for="{{ my_list[i+1] }}_score">       VS      {{ my_list[i+1] }}:</label>
+          <input type="text" id="{{ my_list[i+1] }}_score" name="{{ my_list[i+1] }}_score">
+        </div>
+      </div>
+    {% endfor %}
+    <div class="submit-predictions">
+      {{ form.submit }}
+    </div>
+  </form>
+{% endblock %}
