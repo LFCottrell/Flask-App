@@ -39,6 +39,17 @@ class Prediction(db.Model):
         self.home_score = home_score
         self.away_score = away_score
 
+
+class Scores(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    player_score = db.Column(db.Integer, nullable=False)
+    user = db.relationship('User', backref='scores')
+    def __init__(self, user_id, player_score):
+        self.user_id = user_id
+        self.player_score = player_score
+
+
 with app.app_context():
     fixtures = []
     for i in range(0, len(teams_list) - 1,2):
@@ -139,6 +150,9 @@ def predictions():
     else:
         flash("You are not logged in")
         return redirect(url_for("login"))
+
+
+
 
 
 # @app.route('/test')

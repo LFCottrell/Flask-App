@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-url = "https://www.bbc.co.uk/sport/football/premier-league/scores-fixtures/2023-05"
+url = "https://www.bbc.co.uk/sport/football/spanish-la-liga/scores-fixtures"
 response = requests.get(url)
 
 

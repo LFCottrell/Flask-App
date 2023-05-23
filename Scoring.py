@@ -58,7 +58,18 @@ with app.app_context():
         all_users_points.append(total_points)
         my_dict[key] = total_points
 
+# adding the score to the score SQL DB
+
+# user = User.query.get(user_id)
+with app.app_context():
+    for i in range(1, (len(my_dict)+1)):
+        score_data = Scores(user_id=i, player_score=my_dict[i])
+        print(score_data)
+        db.session.add(score_data)
+        db.session.commit()
 
 
-print(my_dict)
+
+
+print(my_dict[2])
 
