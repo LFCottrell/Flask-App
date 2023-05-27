@@ -1,7 +1,19 @@
 {% extends "base.html" %}
-{% block title %}User{% endblock %}
+{% block title %}Login Page{% endblock %}
 
-{% for user in users %}
-    <p>User: {{ user.name }}</p>
-    <p>Score: {{ user.score }}</p>
-{% endfor %}
+
+{%block content %}
+    <html>
+    <head>
+        <title>Results</title>
+    </head>
+    <body>
+        {% if user %}
+            <h1>Welcome, {{ user.name }}!</h1>
+            <p>Your points: {{ score.player_score }}</p>
+        {% else %}
+            <p>{{ score }}</p>
+        {% endif %}
+    </body>
+    </html>
+{% endblock %}

@@ -3,6 +3,9 @@ from datetime import timedelta
 from forms import *
 from BBC_scraper import teams_list
 from flask_sqlalchemy import SQLAlchemy
+# from Scoring import my_dict
+
+print(teams_list)
 
 app = Flask(__name__)
 app.secret_key="hello"
@@ -11,6 +14,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///predictions.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -43,11 +47,21 @@ class Prediction(db.Model):
 class Scores(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    # fixture_id = db.Column(db.Integer, db.ForeignKey('fixture.id'), nullable=False)
     player_score = db.Column(db.Integer, nullable=False)
     user = db.relationship('User', backref='scores')
+    # fixture = db.relationship('Fixture', backref='scores')
     def __init__(self, user_id, player_score):
         self.user_id = user_id
         self.player_score = player_score
+
+# # #run this whenever you want to delete the entries from the database
+# with app.app_context():
+#     db.session.query(Fixture).delete()
+#     db.session.query(Prediction).delete()
+#     db.session.query(Scores).delete()
+#     db.session.query(User).delete()
+#     db.session.commit()
 
 
 with app.app_context():
@@ -55,8 +69,13 @@ with app.app_context():
     for i in range(0, len(teams_list) - 1,2):
         home_team = teams_list[i]
         away_team = teams_list[i + 1]
-        fixture = Fixture(home_team, away_team)
-        fixtures.append(fixture)  # Add the fixture to the list
+        existing_fixture = Fixture.query.filter_by(home_team=home_team, away_team=away_team).first()
+        if existing_fixture:
+            continue
+        else:
+
+            fixture = Fixture(home_team, away_team)
+            fixtures.append(fixture)  # Add the fixture to the list
 
 
         # fixture = Fixture.query.filter_by(home_team=home_team, away_team=away_team).first()
@@ -145,11 +164,25 @@ def predictions():
             # db.session.add_all(fixtures)
             db.session.add_all(predictions)
             db.session.commit()
-            return 'prediction submitted'
+            return render_template('prediction_submitted.html')
         return render_template("predictions.html", user=user, form=form, my_list=my_list)
     else:
         flash("You are not logged in")
         return redirect(url_for("login"))
+
+
+@app.route('/score')
+def results():
+    if "user" in session:
+        user = User.query.filter_by(name=session["user"]).first()
+        user_id = user.id
+        points = Scores.query.filter_by(user_id=user_id).first()
+    else:
+        points = "The points have not yet been calculated."
+
+    return render_template("score.html", user = user, score = points)
+
+
 
 
 

@@ -1,8 +1,9 @@
 import app
 from app import *
 import pandas as pd
+from results import final_results_list
 
-results = pd.read_csv('mock_results.csv')
+# results = pd.read_csv('mock_results.csv')
 
 # predictions = Prediction.query.all()
 
@@ -39,8 +40,8 @@ with app.app_context():
             home_pred = pred_1.home_score
             away_pred = pred_1.away_score
             # print(home_pred,away_pred)
-            home_result = results['home_team_score'][i]
-            away_result = results['away_team_score'][i]
+            home_result = int(final_results_list[i][0])
+            away_result = int(final_results_list[i][1])
 
             points = 0
             # if prediction is correct
@@ -71,5 +72,5 @@ with app.app_context():
 
 
 
-print(my_dict[2])
+print(my_dict[1])
 

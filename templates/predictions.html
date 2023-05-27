@@ -1,6 +1,47 @@
-{% extends "base.html" %}
-{% block title %}Predictions{% endblock %}
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <title>{% block title%}{% endblock %}</title>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg custom-navbar">
+          <a class="navbar-brand" href="#"></a>
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
 
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+              <li class="nav-item active">
+                <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/login">Login</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/score">Results</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/logout">Logout</a>
+              </li>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="#">Action</a>
+                  <a class="dropdown-item" href="#">Another action</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="#">Something else here</a>
+                </div>
+              </li>
+            </ul>
+            <form class="form-inline my-2 my-lg-0">
+              <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+              <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            </form>
+          </div>
+        </nav>
+        <br>
+        <br>
+        <div class="predictions-wrapper">
 {% block content %}
     {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -9,7 +50,8 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-<p>Enter your predictions here, {{user}}:</p>
+<h4 class = "score-prediction">Enter your predictions below, {{user}}:</h4>
+<br>
 <form method="POST" action="">
     {{ form.hidden_tag() }}
     {% for i in range(0, my_list|length, 2) %}
@@ -22,15 +64,15 @@
         </div>
         <div class="score-prediction">
 
-          <label for="{{ my_list[i] }}_score">{{ my_list[i] }}:</label>
-          <input type="text" id="{{ my_list[i] }}_score" name="{{ my_list[i] }}_score">
-            <label             </label>
-          <label for="{{ my_list[i+1] }}_score">       VS      {{ my_list[i+1] }}:</label>
+          <label for="{{ my_list[i] }}_score" style="padding-right: 15px;">{{ my_list[i] }}:</label>
+          <input type="text" id="{{ my_list[i] }}_score" name="{{ my_list[i] }}_score" style="padding-right: 15px;">
+          <label for="{{ my_list[i+1] }}_score" style="padding-left: 7px; padding-right: 7px">{{ my_list[i+1] }}:</label>
           <input type="text" id="{{ my_list[i+1] }}_score" name="{{ my_list[i+1] }}_score">
         </div>
       </div>
     {% endfor %}
-    <div class="submit-predictions">
+        <br>
+    <div class="score-prediction">
       {{ form.submit }}
     </div>
   </form>
