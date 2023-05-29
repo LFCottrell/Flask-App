@@ -4,6 +4,8 @@ from forms import *
 from BBC_scraper import teams_list
 from flask_sqlalchemy import SQLAlchemy
 # from Scoring import my_dict
+import sqlite3
+
 
 print(teams_list)
 
@@ -177,10 +179,21 @@ def results():
         user = User.query.filter_by(name=session["user"]).first()
         user_id = user.id
         points = Scores.query.filter_by(user_id=user_id).first()
+        print('user1')
     else:
         points = "The points have not yet been calculated."
+        user = 'poo'
+        print('user1')
 
     return render_template("score.html", user = user, score = points)
+
+
+
+@app.route('/score_table')
+def results_table():
+    rows = User.query.all()
+    return render_template("score_table_trial.html", rows=rows)
+
 
 
 

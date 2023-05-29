@@ -2,6 +2,7 @@
 {% block title %}Login Page{% endblock %}
 
 
+
 {%block content %}
     <html>
     <head>
@@ -9,8 +10,9 @@
     </head>
     <body>
         {% if user %}
-            <h1>Welcome, {{ user.name }}!</h1>
-            <p>Your points: {{ score.player_score }}</p>
+            <h1>{{ user.name }}</h1>
+            <p><b>Points:<b> {{ score.player_score }}</p>
+
         {% else %}
             <p>{{ score }}</p>
         {% endif %}
