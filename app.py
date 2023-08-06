@@ -26,6 +26,7 @@ class User(db.Model):
 
 class Fixture(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    # Week = db.Column(db.Integer, nullable=False)
     home_team = db.Column(db.String(50), nullable=False)
     away_team = db.Column(db.String(50), nullable=False)
     def __init__(self, home_team, away_team):
@@ -75,7 +76,6 @@ with app.app_context():
         if existing_fixture:
             continue
         else:
-
             fixture = Fixture(home_team, away_team)
             fixtures.append(fixture)  # Add the fixture to the list
 
@@ -189,10 +189,63 @@ def results():
 
 
 
-@app.route('/score_table')
+# @app.route('/score_table')
+# def results_table():
+#     rows = User.query.all()
+#     rows_1 = Fixture.query.all()
+#     return render_template("score_table_trial.html", rows=rows, rows1 = rows_1)
+
+# @app.route('/score_table')
+# def results_table():
+#     # Join tables and fetch combined data
+#     combined_data = db.session.query(User, Fixture, Prediction).\
+#         join(Prediction, User.id == Prediction.user_id).\
+#         join(Fixture, Prediction.fixture_id == Fixture.id).\
+#         all()
+#     for user, fixture, prediction in combined_data:
+#         print("User:", user.name)
+#         print("Fixture - Home Team:", fixture.home_team)
+#         print("Fixture - Away Team:", fixture.away_team)
+#         print("Prediction - Home Score:", prediction.home_score)
+#         print("Prediction - Away Score:", prediction.away_score)
+#
+#     return render_template("score_table_trial.html", data = combined_data)
+
+@app.route('/score_table', methods=['GET', 'POST'])
 def results_table():
-    rows = User.query.all()
-    return render_template("score_table_trial.html", rows=rows)
+    if "user" in session:
+        user = User.query.filter_by(name=session["user"]).first()
+        user_id = user.id
+        points = Scores.query.filter_by(user_id=user_id).first()
+        print('user1')
+    else:
+        points = "The points have not yet been calculated."
+        user = 'poo'
+        print('user1')
+
+    users = User.query.all()
+
+    selected_user_id = None
+    if request.method == 'POST':
+        selected_user_id = request.form.get('user_id')
+
+    if selected_user_id:
+        # If a user is selected, filter by the selected user ID
+        all_predictions = db.session.query(User, Fixture, Prediction).\
+            join(Prediction, User.id == Prediction.user_id).\
+            join(Fixture, Prediction.fixture_id == Fixture.id).\
+            filter(Prediction.user_id == int(selected_user_id)).all()
+    else:
+        # If no user is selected, fetch all predictions
+        all_predictions = db.session.query(User, Fixture, Prediction).\
+            join(Prediction, User.id == Prediction.user_id).\
+            join(Fixture, Prediction.fixture_id == Fixture.id).all()
+
+    return render_template("score_table_trial.html", all_predictions=all_predictions, users=users, selected_user_id=selected_user_id, user = user, score = points)
+
+
+
+
 
 
 

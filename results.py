@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 # URL of the webpage
-url = "https://www.bbc.co.uk/sport/football/scores-fixtures/2023-05-25"
+url = "https://www.bbc.co.uk/sport/football/womens-world-cup/scores-fixtures/2023-08-05"
 
 # Send a GET request to the webpage
 response = requests.get(url)

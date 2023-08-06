@@ -1,26 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Login Page{% endblock %}
+
+
+
+{%block content %}
 <!DOCTYPE html>
 <html>
 <head>
+    <title>Results</title>
+    </head>
+    <body>
+        {% if user %}
+            <h1>{{ user.name }}</h1>
+            <p><b>Points:<b> {{ score.player_score }}</p>
+
+        {% else %}
+            <p>{{ score }}</p>
+        {% endif %}
+    </body>
     <title>Table Display</title>
 </head>
 <body>
+    <form method="post" action="/score_table">
+        <label for="user_id">Select a User:</label>
+        <select name="user_id" id="user_id">
+            <option value="">All Users</option>
+            {% for user in users %}
+            <option value="{{ user.id }}" {% if user.id == selected_user_id %}selected{% endif %}>{{ user.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+
     <table>
         <thead>
             <tr>
-                <th>id</th>
-                <th>name</th>
-                <!-- Add more table headers as needed -->
+                <th>Name</th>
+                <th>Home</th>
+                <th>Away</th>
+                <th>Score</th>
             </tr>
         </thead>
         <tbody>
-            {% for row in rows %}
+            {% for user, fixture, prediction in all_predictions %}
             <tr>
-                <td>{{ row.id }}</td>
-                <td>{{ row.name }}</td>
-                <!-- Add more table cells as needed -->
+                <td>{{ user.name }}</td>
+                <td>{{ fixture.home_team }}</td>
+                <td>{{ fixture.away_team }}</td>
+                <td>{{ prediction.home_score }} - {{ prediction.away_score }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </body>
 </html>
+{% endblock %}

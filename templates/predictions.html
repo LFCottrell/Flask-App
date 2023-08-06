@@ -64,10 +64,18 @@
         </div>
         <div class="score-prediction">
 
-          <label for="{{ my_list[i] }}_score" style="padding-right: 15px;">{{ my_list[i] }}:</label>
-          <input type="text" id="{{ my_list[i] }}_score" name="{{ my_list[i] }}_score" style="padding-right: 15px;">
-          <label for="{{ my_list[i+1] }}_score" style="padding-left: 7px; padding-right: 7px">{{ my_list[i+1] }}:</label>
-          <input type="text" id="{{ my_list[i+1] }}_score" name="{{ my_list[i+1] }}_score">
+          <div class = "col-md-1">
+            <label for="{{ my_list[i] }}_score"><b>{{ my_list[i] }}</b>:</label>
+              </div>
+          <div class = "col-md-1.5">
+            <input type="text" id="{{ my_list[i] }}_score" name="{{ my_list[i] }}_score">
+              </div>
+          <div class = "col-md-1 ml-4">
+            <label for="{{ my_list[i+1] }}_score"><b>{{ my_list[i+1] }}</b>:</label>
+              </div>
+          <div class = "col-md-1.5">
+            <input type="text" id="{{ my_list[i+1] }}_score" name="{{ my_list[i+1] }}_score">
+              </div>
         </div>
       </div>
     {% endfor %}
