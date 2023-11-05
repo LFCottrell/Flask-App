@@ -3,9 +3,12 @@ from datetime import timedelta
 from forms import *
 from BBC_scraper import teams_list
 from flask_sqlalchemy import SQLAlchemy
+from flask_bcrypt import Bcrypt
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
 # from Scoring import my_dict
 import sqlite3
-
+from flask_login import current_user
+from flask_login import UserMixin
 
 print(teams_list)
 
@@ -16,13 +19,66 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///predictions.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+bcrypt=Bcrypt(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
-    def __init__(self, name):
-        self.name = name
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(60), nullable=False)
+    def __init__(self, email, password):
+        self.email = email
+        self.password = password
+
+    def is_active(self):
+        return True  # Return True for active users
+
+    def is_authenticated(self):
+        return True  # Return True for authenticated users
+
+    def is_anonymous(self):
+        return False  # Return False for anonymous users
+
+    def get_id(self):
+        return str(self.id)
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        # Process user registration
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        # Hash and salt the password
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+        new_user = User(email=email, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        # Log the user in after registration
+        login_user(new_user)
+
+        flash('Your account has been created and you are now logged in!', 'success')
+        return redirect(url_for('predictions'))
+
+    return render_template('register.html')
+
+
+@app.route('/')
+def home():
+    if current_user.is_authenticated:
+        # User is already logged in, route to predictions
+        return redirect(url_for('predictions'))
+    else:
+        # User is not logged in, route to the login page
+        return redirect(url_for('login'))
+
 
 class Fixture(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -58,7 +114,7 @@ class Scores(db.Model):
         self.user_id = user_id
         self.player_score = player_score
 
-# # #run this whenever you want to delete the entries from the database
+# #run this whenever you want to delete the entries from the database
 # with app.app_context():
 #     db.session.query(Fixture).delete()
 #     db.session.query(Prediction).delete()
@@ -97,27 +153,48 @@ with app.app_context():
 #     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 #     user = db.relationship('User', backref='predictions')
 
-@app.route('/')
-def home():
-    return render_template("form.html")
+# @app.route('/')
+# def home():
+#     return render_template("form.html")
 
-@app.route('/login', methods=["POST", "GET"])
+# @app.route('/login', methods=["POST", "GET"])
+# def login():
+#     if request.method == "POST":
+#         session.permanent = True
+#         user = request.form["nm"]
+#         session["user"] = user
+#         #adding user to databases
+#         usr=User(user)
+#         db.session.add(usr)
+#         db.session.commit()
+#         # flash("Successfully logged in")
+#         return redirect(url_for("predictions"))
+#     else:
+#         if "user" in session:
+#             flash("Already logged in")
+#             return redirect(url_for("predictions"))
+#         return render_template("login.html")
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == "POST":
-        session.permanent = True
-        user = request.form["nm"]
-        session["user"] = user
-        #adding user to databases
-        usr=User(user)
-        db.session.add(usr)
-        db.session.commit()
-        flash("Successfully logged in")
-        return redirect(url_for("predictions"))
-    else:
-        if "user" in session:
-            flash("Already logged in")
-            return redirect(url_for("predictions"))
-        return render_template("login.html")
+    if current_user.is_authenticated:
+        # User is already logged in, route to predictions
+        return redirect(url_for('predictions'))
+
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and bcrypt.check_password_hash(user.password, password):
+            login_user(user)
+            flash('Logged in successfully!', 'success')
+            return redirect(url_for('predictions'))
+        else:
+            flash('Login unsuccessful. Please check your email and password.', 'danger')
+
+    return render_template('login.html')
 
 @app.route("/user")
 def user():
@@ -128,11 +205,11 @@ def user():
         flash("You are not logged in")
         return redirect(url_for("login"))
 
-@app.route("/logout")
-def logout():
-    flash(f"you have been logged out", "info")
-    session.pop("user", None)
-    return redirect(url_for("login"))
+# @app.route("/logout")
+# def logout():
+#     flash(f"you have been logged out", "info")
+#     session.pop("user", None)
+#     return redirect(url_for("login"))
 
 
 @app.route("/predictions", methods = ['GET', 'POST'])
@@ -244,7 +321,19 @@ def results_table():
     return render_template("score_table_trial.html", all_predictions=all_predictions, users=users, selected_user_id=selected_user_id, user = user, score = points)
 
 
+@app.route('/logout')
+@login_required  # Protect the route to ensure the user is logged in
+def logout():
+    # Use flask-login's logout_user function to log the user out
+    logout_user()
+    flash("You have been logged out", "info")
+    return redirect(url_for('/'))  # Redirect to the login page or another page after logging out
 
+
+# used to drop original DB and create new one with email field
+with app.app_context():
+    db.drop_all()
+    db.create_all()
 
 
 
