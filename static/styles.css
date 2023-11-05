@@ -1,0 +1,86 @@
+.text-centre {
+text-align: center
+color: #660033;
+}
+
+
+.text-color {
+color: #660033;
+}
+
+
+.custom-navbar {
+  background-color: #660033; /* Replace with your desired color */
+  /* Additional styles for the navbar */
+}
+
+.custom-navbar .nav-link {
+  color: white;
+}
+
+.container {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+height: 100vh; /* Set the height of the container to 100% of the viewport height */
+}
+
+body {
+background-color: #94BEE5;
+}
+
+.score-prediction {
+display: flex;
+flex-direction: row;
+align-items: center;
+justify-content: center;
+}
+
+.predictions-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+
+.centre_things {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center
+}
+
+.score-test {
+display: flex;
+flex-direction: row;
+align-items: center;
+justify-content: space-between;
+}
+
+
+.match-prediction {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.team-prediction {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.team-name {
+    margin-bottom: 5px;
+}
+
+.score-prediction {
+    display: flex;
+    align-items: center;
+}
+
+.score-prediction label {
+    margin-right: 10px;
+}
+

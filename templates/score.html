@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Login Page{% endblock %}
+
+
+
+{%block content %}
+    <html>
+    <head>
+        <title>Results</title>
+    </head>
+    <body>
+        {% if user %}
+            <h1>{{ user.name }}</h1>
+            <p><b>Points:<b> {{ score.player_score }}</p>
+
+        {% else %}
+            <p>{{ score }}</p>
+        {% endif %}
+    </body>
+    </html>
+{% endblock %}
