@@ -42,6 +42,13 @@
         <br>
         <br>
         <div class="predictions-wrapper">
+<br>
+<br>
+<h1 class = "text-color", style="text-align: center;">Footy Predictions</h1>
+<br>
+<br>
+<br>
+<br>
 {% block content %}
     {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -50,7 +57,7 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-<h4 class = "score-prediction">Enter your predictions below, {{user}}:</h4>
+<h4 class = "score-prediction">Enter your predictions below, {{user.email}}:</h4>
 <br>
 <form method="POST" action="">
     {{ form.hidden_tag() }}

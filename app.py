@@ -191,8 +191,6 @@ def login():
             login_user(user)
             flash('Logged in successfully!', 'success')
             return redirect(url_for('predictions'))
-        else:
-            flash('Login unsuccessful. Please check your email and password.', 'danger')
 
     return render_template('login.html')
 
@@ -214,55 +212,97 @@ def user():
 
 @app.route("/predictions", methods = ['GET', 'POST'])
 def predictions():
-    if "user" in session:
-        user = session["user"]
-        form = FixtureForm()
-        my_list=teams_list
-        if form.validate_on_submit():
-            user = User.query.filter_by(name=session["user"]).first()
-            # fixtures = []
-            predictions = []
-            for i in range(0, len(my_list) - 1, 2):
-                home_team = my_list[i]
-                away_team = my_list[i + 1]
-                # fixture = Fixture(home_team, away_team)
-                # fixtures.append(fixture)  # Add the fixture to the list
-                # print(home_team, away_team)
-                # print(my_list)
+    user = current_user
+    form = FixtureForm()
+    my_list=teams_list
+    if form.validate_on_submit():
+        user = current_user
+        # fixtures = []
+        predictions = []
+        for i in range(0, len(my_list) - 1, 2):
+            home_team = my_list[i]
+            away_team = my_list[i + 1]
+            # fixture = Fixture(home_team, away_team)
+            # fixtures.append(fixture)  # Add the fixture to the list
+            # print(home_team, away_team)
+            # print(my_list)
 
-                home_score = request.form['{}_score'.format(home_team)]
-                away_score = request.form['{}_score'.format(away_team)]
+            home_score = request.form['{}_score'.format(home_team)]
+            away_score = request.form['{}_score'.format(away_team)]
 
-                fixture = Fixture.query.filter_by(home_team=home_team, away_team=away_team).first()
-                print(home_score, away_score)
+            fixture = Fixture.query.filter_by(home_team=home_team, away_team=away_team).first()
+            print(home_score, away_score)
 
-                prediction = Prediction(user_id=user.id, fixture_id=fixture.id, home_score=home_score,
-                                        away_score=away_score)
-                predictions.append(prediction)
+            prediction = Prediction(user_id=user.id, fixture_id=fixture.id, home_score=home_score,
+                                    away_score=away_score)
+            predictions.append(prediction)
 
-            # db.session.add_all(fixtures)
-            db.session.add_all(predictions)
-            db.session.commit()
-            return render_template('prediction_submitted.html')
-        return render_template("predictions.html", user=user, form=form, my_list=my_list)
-    else:
-        flash("You are not logged in")
-        return redirect(url_for("login"))
+        # db.session.add_all(fixtures)
+        db.session.add_all(predictions)
+        db.session.commit()
+        return render_template('prediction_submitted.html')
+    return render_template("predictions.html", user=user, form=form, my_list=my_list)
 
 
 @app.route('/score')
 def results():
-    if "user" in session:
-        user = User.query.filter_by(name=session["user"]).first()
-        user_id = user.id
-        points = Scores.query.filter_by(user_id=user_id).first()
-        print('user1')
-    else:
-        points = "The points have not yet been calculated."
-        user = 'poo'
-        print('user1')
+    user = current_user
+    user_id = user.id
+    points = Scores.query.filter_by(user_id=user_id).first()
+    print('user1')
+    all_users = User.query.all()
+    print(all_users)
+    past_weeks_sums = {}
+    for u in all_users:
+        user_scores = Scores.query.filter_by(user_id=u.id).all()
+        past_weeks_sums[u.id] = sum(score.player_score for score in user_scores)
+        print(past_weeks_sums)
 
-    return render_template("score.html", user = user, score = points)
+    user = current_user
+    user_id = user.id
+    points = Scores.query.filter_by(user_id=user_id).first()
+    print('user1')
+
+    users = User.query.all()
+
+    selected_user_id = None
+    if request.method == 'POST':
+        selected_user_id = request.form.get('user_id')
+
+    if selected_user_id:
+        # If a user is selected, filter by the selected user ID
+        all_predictions = db.session.query(User, Fixture, Prediction). \
+            join(Prediction, User.id == Prediction.user_id). \
+            join(Fixture, Prediction.fixture_id == Fixture.id). \
+            filter(Prediction.user_id == int(selected_user_id)).all()
+    else:
+        # If no user is selected, fetch all predictions
+        all_predictions = db.session.query(User, Fixture, Prediction). \
+            join(Prediction, User.id == Prediction.user_id). \
+            join(Fixture, Prediction.fixture_id == Fixture.id).all()
+    return render_template("score.html", user = user, score = points, past_weeks_sums=past_weeks_sums, all_predictions=all_predictions, users=users, selected_user_id=selected_user_id)
+
+
+
+@app.route('/leaderboard')
+def leaderboard():
+    # Query the database to get the sum of scores for each user
+    all_users = User.query.all()
+    leaderboard_data = []
+
+    for user in all_users:
+        user_id = user.id
+        user_email = user.email
+        user_scores = Scores.query.filter_by(user_id=user_id).all()
+        total_score = sum(score.player_score for score in user_scores)
+
+        # Append user data to the leaderboard_data list
+        leaderboard_data.append({'user_id': user_id, 'user_email': user_email, 'total_score': total_score})
+
+    # Sort the leaderboard_data based on total_score in descending order
+    leaderboard_data.sort(key=lambda x: x['total_score'], reverse=True)
+
+    return render_template('leaderboard.html', leaderboard_data=leaderboard_data)
 
 
 
@@ -290,15 +330,12 @@ def results():
 
 @app.route('/score_table', methods=['GET', 'POST'])
 def results_table():
-    if "user" in session:
-        user = User.query.filter_by(name=session["user"]).first()
-        user_id = user.id
-        points = Scores.query.filter_by(user_id=user_id).first()
-        print('user1')
-    else:
-        points = "The points have not yet been calculated."
-        user = 'poo'
-        print('user1')
+
+    user = current_user
+    user_id = user.id
+    points = Scores.query.filter_by(user_id=user_id).first()
+    print('user1')
+
 
     users = User.query.all()
 
@@ -327,18 +364,22 @@ def logout():
     # Use flask-login's logout_user function to log the user out
     logout_user()
     flash("You have been logged out", "info")
-    return redirect(url_for('/'))  # Redirect to the login page or another page after logging out
+    return redirect(url_for('login'))  # Redirect to the login page or another page after logging out
 
 
-# used to drop original DB and create new one with email field
-with app.app_context():
-    db.drop_all()
-    db.create_all()
+# # used to drop original DB and create new one with email field
+# with app.app_context():
+#     db.drop_all()
+#     db.create_all()
 
-
-
-
-
+# with app.app_context():
+#     user = User.query.filter_by(email='liamcottrell1996@hotmail.co.uk').first()
+#
+#     score = Scores(user_id=user.id, player_score=50)
+#
+#     db.session.query(Scores).delete()
+#     db.session.add(score)
+#     db.session.commit()
 
 
 
