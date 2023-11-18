@@ -1,0 +1,16 @@
+{
+  "name": "Footy Predictions",
+  "short_name": "Footy Predictions",
+  "description": "Football predictions app",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/static/icon.png",
+      "sizes": "192x192",
+      "type": "image/jpg"
+    }
+  ]
+}
