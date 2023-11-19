@@ -9,13 +9,14 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 import sqlite3
 from flask_login import current_user
 from flask_login import UserMixin
+import pyodbc
 
 print(teams_list)
 
 app = Flask(__name__)
 app.secret_key="hello"
 app.permanent_session_lifetime = timedelta(days=5)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///predictions.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://liamcottrell1996@hotmail.co.uk@new-pred:Pitshanger1!@new-pred.database.windows.net/new-pred-db?driver=ODBC+Driver+17+for+SQL+Server'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -24,10 +25,11 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 
-class User(db.Model):
+class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
+
     def __init__(self, email, password):
         self.email = email
         self.password = password
@@ -43,9 +45,58 @@ class User(db.Model):
 
     def get_id(self):
         return str(self.id)
+
+class Fixture(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    # Week = db.Column(db.Integer, nullable=False)
+    home_team = db.Column(db.String(50), nullable=False)
+    away_team = db.Column(db.String(50), nullable=False)
+    def __init__(self, home_team, away_team):
+        self.home_team = home_team
+        self.away_team = away_team
+
+class Prediction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    fixture_id = db.Column(db.Integer, db.ForeignKey('fixture.id'), nullable=False)
+    home_score = db.Column(db.Integer, nullable=False)
+    away_score = db.Column(db.Integer, nullable=False)
+    user = db.relationship('Users', backref='predictions')
+    fixture = db.relationship('Fixture', backref='predictions')
+    def __init__(self, user_id, fixture_id, home_score, away_score):
+        self.user_id = user_id
+        self.fixture_id = fixture_id
+        self.home_score = home_score
+        self.away_score = away_score
+
+class Scores(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    # fixture_id = db.Column(db.Integer, db.ForeignKey('fixture.id'), nullable=False)
+    player_score = db.Column(db.Integer, nullable=False)
+    user = db.relationship('Users', backref='scores')
+    # fixture = db.relationship('Fixture', backref='scores')
+    def __init__(self, user_id, player_score):
+        self.user_id = user_id
+        self.player_score = player_score
+
+
+# ## -------------this is the code to run to create tables-----------------
+# # Create all tables
+# with app.app_context():
+#     db.drop_all()
+#     db.create_all()
+#
+# # Run the app
+# if __name__ == '__main__':
+#     app.run(debug=True)
+# # #------------------------table creation end code--------------------
+
+
+
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return Users.query.get(int(user_id))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -57,7 +108,7 @@ def register():
         # Hash and salt the password
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
-        new_user = User(email=email, password=hashed_password)
+        new_user = Users(email=email, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
 
@@ -79,40 +130,6 @@ def home():
         # User is not logged in, route to the login page
         return redirect(url_for('login'))
 
-
-class Fixture(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    # Week = db.Column(db.Integer, nullable=False)
-    home_team = db.Column(db.String(50), nullable=False)
-    away_team = db.Column(db.String(50), nullable=False)
-    def __init__(self, home_team, away_team):
-        self.home_team = home_team
-        self.away_team = away_team
-class Prediction(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    fixture_id = db.Column(db.Integer, db.ForeignKey('fixture.id'), nullable=False)
-    home_score = db.Column(db.Integer, nullable=False)
-    away_score = db.Column(db.Integer, nullable=False)
-    user = db.relationship('User', backref='predictions')
-    fixture = db.relationship('Fixture', backref='predictions')
-    def __init__(self, user_id, fixture_id, home_score, away_score):
-        self.user_id = user_id
-        self.fixture_id = fixture_id
-        self.home_score = home_score
-        self.away_score = away_score
-
-
-class Scores(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    # fixture_id = db.Column(db.Integer, db.ForeignKey('fixture.id'), nullable=False)
-    player_score = db.Column(db.Integer, nullable=False)
-    user = db.relationship('User', backref='scores')
-    # fixture = db.relationship('Fixture', backref='scores')
-    def __init__(self, user_id, player_score):
-        self.user_id = user_id
-        self.player_score = player_score
 
 # #run this whenever you want to delete the entries from the database
 # with app.app_context():
@@ -143,38 +160,6 @@ with app.app_context():
 
 
 
-#
-# class Prediction(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     home_team = db.Column(db.String(50))
-#     away_team = db.Column(db.String(50))
-#     home_score = db.Column(db.Integer)
-#     away_score = db.Column(db.Integer)
-#     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-#     user = db.relationship('User', backref='predictions')
-
-# @app.route('/')
-# def home():
-#     return render_template("form.html")
-
-# @app.route('/login', methods=["POST", "GET"])
-# def login():
-#     if request.method == "POST":
-#         session.permanent = True
-#         user = request.form["nm"]
-#         session["user"] = user
-#         #adding user to databases
-#         usr=User(user)
-#         db.session.add(usr)
-#         db.session.commit()
-#         # flash("Successfully logged in")
-#         return redirect(url_for("predictions"))
-#     else:
-#         if "user" in session:
-#             flash("Already logged in")
-#             return redirect(url_for("predictions"))
-#         return render_template("login.html")
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -185,9 +170,9 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        user = User.query.filter_by(email=email).first()
+        user = Users.query.filter_by(email=email).first()
 
-        if user and bcrypt.check_password_hash(user.password, password):
+        if user and bcrypt.check_password_hash(users.password, password):
             login_user(user)
             flash('Logged in successfully!', 'success')
             return redirect(url_for('predictions'))
@@ -202,12 +187,6 @@ def user():
     else:
         flash("You are not logged in")
         return redirect(url_for("login"))
-
-# @app.route("/logout")
-# def logout():
-#     flash(f"you have been logged out", "info")
-#     session.pop("user", None)
-#     return redirect(url_for("login"))
 
 
 @app.route("/predictions", methods = ['GET', 'POST'])
@@ -250,7 +229,7 @@ def results():
     user_id = user.id
     points = Scores.query.filter_by(user_id=user_id).first()
     print('user1')
-    all_users = User.query.all()
+    all_users = Users.query.all()
     print(all_users)
     past_weeks_sums = {}
     for u in all_users:
@@ -263,7 +242,7 @@ def results():
     points = Scores.query.filter_by(user_id=user_id).first()
     print('user1')
 
-    users = User.query.all()
+    users = Users.query.all()
 
     selected_user_id = None
     if request.method == 'POST':
@@ -272,13 +251,13 @@ def results():
     if selected_user_id:
         # If a user is selected, filter by the selected user ID
         all_predictions = db.session.query(User, Fixture, Prediction). \
-            join(Prediction, User.id == Prediction.user_id). \
+            join(Prediction, Users.id == Prediction.user_id). \
             join(Fixture, Prediction.fixture_id == Fixture.id). \
             filter(Prediction.user_id == int(selected_user_id)).all()
     else:
         # If no user is selected, fetch all predictions
-        all_predictions = db.session.query(User, Fixture, Prediction). \
-            join(Prediction, User.id == Prediction.user_id). \
+        all_predictions = db.session.query(Users, Fixture, Prediction). \
+            join(Prediction, Users.id == Prediction.user_id). \
             join(Fixture, Prediction.fixture_id == Fixture.id).all()
     return render_template("score.html", user = user, score = points, past_weeks_sums=past_weeks_sums, all_predictions=all_predictions, users=users, selected_user_id=selected_user_id)
 
@@ -287,7 +266,7 @@ def results():
 @app.route('/leaderboard')
 def leaderboard():
     # Query the database to get the sum of scores for each user
-    all_users = User.query.all()
+    all_users = Users.query.all()
     leaderboard_data = []
 
     for user in all_users:
@@ -305,29 +284,6 @@ def leaderboard():
     return render_template('leaderboard.html', leaderboard_data=leaderboard_data)
 
 
-
-# @app.route('/score_table')
-# def results_table():
-#     rows = User.query.all()
-#     rows_1 = Fixture.query.all()
-#     return render_template("score_table_trial.html", rows=rows, rows1 = rows_1)
-
-# @app.route('/score_table')
-# def results_table():
-#     # Join tables and fetch combined data
-#     combined_data = db.session.query(User, Fixture, Prediction).\
-#         join(Prediction, User.id == Prediction.user_id).\
-#         join(Fixture, Prediction.fixture_id == Fixture.id).\
-#         all()
-#     for user, fixture, prediction in combined_data:
-#         print("User:", user.name)
-#         print("Fixture - Home Team:", fixture.home_team)
-#         print("Fixture - Away Team:", fixture.away_team)
-#         print("Prediction - Home Score:", prediction.home_score)
-#         print("Prediction - Away Score:", prediction.away_score)
-#
-#     return render_template("score_table_trial.html", data = combined_data)
-
 @app.route('/score_table', methods=['GET', 'POST'])
 def results_table():
 
@@ -337,7 +293,7 @@ def results_table():
     print('user1')
 
 
-    users = User.query.all()
+    users = Users.query.all()
 
     selected_user_id = None
     if request.method == 'POST':
@@ -345,14 +301,14 @@ def results_table():
 
     if selected_user_id:
         # If a user is selected, filter by the selected user ID
-        all_predictions = db.session.query(User, Fixture, Prediction).\
-            join(Prediction, User.id == Prediction.user_id).\
+        all_predictions = db.session.query(Users, Fixture, Prediction).\
+            join(Prediction, Users.id == Prediction.user_id).\
             join(Fixture, Prediction.fixture_id == Fixture.id).\
             filter(Prediction.user_id == int(selected_user_id)).all()
     else:
         # If no user is selected, fetch all predictions
-        all_predictions = db.session.query(User, Fixture, Prediction).\
-            join(Prediction, User.id == Prediction.user_id).\
+        all_predictions = db.session.query(Users, Fixture, Prediction).\
+            join(Prediction, Users.id == Prediction.user_id).\
             join(Fixture, Prediction.fixture_id == Fixture.id).all()
 
     return render_template("score_table_trial.html", all_predictions=all_predictions, users=users, selected_user_id=selected_user_id, user = user, score = points)
@@ -365,36 +321,6 @@ def logout():
     logout_user()
     flash("You have been logged out", "info")
     return redirect(url_for('login'))  # Redirect to the login page or another page after logging out
-
-
-# # used to drop original DB and create new one with email field
-# with app.app_context():
-#     db.drop_all()
-#     db.create_all()
-
-# with app.app_context():
-#     user = User.query.filter_by(email='liamcottrell1996@hotmail.co.uk').first()
-#
-#     score = Scores(user_id=user.id, player_score=50)
-#
-#     db.session.query(Scores).delete()
-#     db.session.add(score)
-#     db.session.commit()
-
-
-
-
-# @app.route('/test')
-# def test():
-#     return render_template("new.html")
-
-# @app.route('/submit', methods=['POST'])
-# def submit():
-#     name = request.form['name']
-#     email = request.form['email']
-#     # Do something with the form data
-#     return 'Thanks for submitting the form!'
-
 
 
 if __name__ == '__main__':
