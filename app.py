@@ -172,7 +172,7 @@ def login():
 
         user = Users.query.filter_by(email=email).first()
 
-        if user and bcrypt.check_password_hash(users.password, password):
+        if user and bcrypt.check_password_hash(user.password, password):
             login_user(user)
             flash('Logged in successfully!', 'success')
             return redirect(url_for('predictions'))
