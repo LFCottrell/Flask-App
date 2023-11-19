@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard{% endblock %}
+
+{% block content %}
+    <h1>Leaderboard</h1>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>User Email</th>
+                <th>Total Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in leaderboard_data %}
+                <tr>
+                    <td>{{ data.user_id }}</td>
+                    <td>{{ data.user_email }}</td>
+                    <td>{{ data.total_score }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
